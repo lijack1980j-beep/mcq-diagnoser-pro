@@ -52,11 +52,33 @@ function pickNextQuestion(questions, askedIds, targetDifficulty) {
   return top[Math.floor(Math.random() * top.length)];
 }
 
-async function loadBank() {
-  const res = await fetch("/api/bank");
-  if (!res.ok) throw new Error("Failed to load bank");
-  return res.json();
+// ✅ LOGIN FUNCTION (PUT THIS IN public/app.js)
+
+async function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Login failed");
+    return;
+  }
+
+  // 🔑 SAVE TOKEN (VERY IMPORTANT)
+  localStorage.setItem("token", data.token);
+
+  alert("Login success");
 }
+
 
 let bank = null;
 let state = null;
@@ -235,4 +257,5 @@ restartBtn.addEventListener("click", () => {
   quizCard.classList.add("hidden");
   setupCard.classList.remove("hidden");
 });
+
 
