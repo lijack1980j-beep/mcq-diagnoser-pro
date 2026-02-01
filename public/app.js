@@ -21,8 +21,9 @@ async function register() {
     return;
   }
 
-  localStorage.setItem("token", data.token);
-  setStatus("Registered & logged in ✅");
+ localStorage.setItem("token", data.token);
+setStatus("Registered & logged in ✅");
+window.location.href = "/questions.html";
 }
 
 async function login() {
@@ -78,4 +79,5 @@ async function loadBank() {
 document.getElementById("registerBtn").onclick = register;
 document.getElementById("loginBtn").onclick = login;
 document.getElementById("bankBtn").onclick = loadBank;
+
 
