@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Questions</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <h1>Question Bank</h1>
+
+    <div class="card">
+      <button id="loadBtn">Load Questions</button>
+      <button id="logoutBtn" style="margin-left:10px;background:#333;">Logout</button>
+    </div>
+
+    <div class="card">
+      <pre id="out">Click "Load Questions"</pre>
+    </div>
+  </div>
+
+  <script type="module">
+    async function load() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please login first");
+        location.href = "/";
+        return;
+      }
+
+      const res = await fetch("/api/bank", {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to load bank");
+        return;
+      }
+
+      document.getElementById("out").textContent = JSON.stringify(data, null, 2);
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      location.href = "/";
+    }
+
+    document.getElementById("loadBtn").onclick = load;
+    document.getElementById("logoutBtn").onclick = logout;
+
+    // Auto-load when page opens (optional)
+    load();
+  </script>
+</body>
+</html>
