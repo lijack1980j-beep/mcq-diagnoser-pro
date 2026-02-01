@@ -1,58 +1,59 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Questions</title>
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
-  <div class="wrap">
-    <h1>Question Bank</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MCQ Diagnoser - Quiz</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <h2>Quiz</h2>
+        <div class="row">
+          <div class="timer" id="timer">--</div>
+          <a href="/">Home</a>
+        </div>
+      </div>
 
-    <div class="card">
-      <button id="loadBtn">Load Questions</button>
-      <button id="logoutBtn" style="margin-left:10px;background:#333;">Logout</button>
+      <div class="card" id="quizCard">
+        <div class="row">
+          <div><small>Progress</small><div id="progress">-</div></div>
+          <div><small>Level</small><div id="level">-</div></div>
+          <div><small>Score</small><div id="score">-</div></div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+          <span id="topicTag"></span>
+          <span id="diffTag"></span>
+        </div>
+
+        <h3 id="qText">Loading...</h3>
+        <div id="choices"></div>
+
+        <div class="row">
+          <button id="submit" disabled>Submit</button>
+          <button id="next" class="secondary hidden">Next</button>
+          <button id="finish" class="danger">Finish</button>
+        </div>
+
+        <div id="feedback" class="feedback hidden"></div>
+      </div>
+
+      <div class="card hidden" id="resultCard">
+        <h3>Final Diagnosis</h3>
+        <p><b>Score:</b> <span id="finalScore"></span>/100</p>
+        <p><b>Level:</b> <span id="finalLevel"></span></p>
+
+        <h4>Topic breakdown</h4>
+        <div id="breakdown"></div>
+
+        <a href="/"><button class="secondary">Back to Home</button></a>
+      </div>
     </div>
 
-    <div class="card">
-      <pre id="out">Click "Load Questions"</pre>
-    </div>
-  </div>
-
-  <script type="module">
-    async function load() {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Please login first");
-        location.href = "/";
-        return;
-      }
-
-      const res = await fetch("/api/bank", {
-        headers: { Authorization: "Bearer " + token }
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Failed to load bank");
-        return;
-      }
-
-      document.getElementById("out").textContent = JSON.stringify(data, null, 2);
-    }
-
-    function logout() {
-      localStorage.removeItem("token");
-      location.href = "/";
-    }
-
-    document.getElementById("loadBtn").onclick = load;
-    document.getElementById("logoutBtn").onclick = logout;
-
-    // Auto-load when page opens (optional)
-    load();
-  </script>
-</body>
+    <script src="quiz.js"></script>
+  </body>
 </html>
