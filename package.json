@@ -1,0 +1,17 @@
+{
+  "name": "mcq-diagnoser-web",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "all": "^0.0.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.6.2",
+    "express": "^4.22.1",
+    "express-session": "^1.19.0",
+    "prompts": "^2.4.2"
+  }
+}

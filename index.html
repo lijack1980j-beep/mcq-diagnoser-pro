@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MCQ Diagnoser - Login</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <h2>MCQ Diagnoser Pro</h2>
+        <div>
+          <a href="/admin.html">Admin</a>
+        </div>
+      </div>
+
+      <div class="card" id="authCard">
+        <h3>Login / Register</h3>
+        <div class="row">
+          <input id="username" placeholder="username" />
+          <input id="password" placeholder="password (min 6)" type="password" />
+          <button id="loginBtn">Login</button>
+          <button id="registerBtn" class="secondary">Register</button>
+        </div>
+        <div id="authMsg"><small></small></div>
+      </div>
+
+      <div class="card hidden" id="startCard">
+        <div class="topbar">
+          <div>
+            <h3>Start a quiz</h3>
+            <small id="meText"></small>
+          </div>
+          <button id="logoutBtn" class="secondary">Logout</button>
+        </div>
+
+        <div class="row">
+          <label>
+            Mode
+            <select id="mode">
+              <option value="practice">Practice</option>
+              <option value="exam">Exam (timed)</option>
+            </select>
+          </label>
+
+          <label>
+            Education system
+            <select id="educationSystem">
+              <option value="general-6">General (6 levels)</option>
+              <option value="school">School → University</option>
+              <option value="language-cefr">Language (CEFR A1–C2)</option>
+            </select>
+          </label>
+
+          <label>
+            Questions
+            <input id="numQuestions" type="number" min="3" max="100" value="12" />
+          </label>
+
+          <label>
+            Seconds/question
+            <input id="secondsPerQuestion" type="number" min="10" max="300" value="30" />
+          </label>
+
+          <button id="startBtn">Start</button>
+        </div>
+
+        <small>Tip: In Exam mode, if time ends, it counts as wrong.</small>
+      </div>
+
+      <div class="card hidden" id="historyCard">
+        <h3>My last attempts</h3>
+        <div id="history"></div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+  </body>
+</html>

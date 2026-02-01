@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - MCQ</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <h2>Admin Panel</h2>
+        <a href="/">Home</a>
+      </div>
+
+      <div class="card">
+        <h3>Add question</h3>
+        <div class="row">
+          <input id="topic" placeholder="topic (e.g. math)" title="Topic" />
+          <input id="difficulty" type="number" min="1" max="5" value="2" placeholder="difficulty" title="Difficulty" />
+        </div>
+        <textarea id="question" placeholder="Question text"></textarea>
+        <textarea id="choices" placeholder='Choices JSON, example: ["A","B","C","D"]'></textarea>
+        <div class="row">
+          <input id="answerIndex" type="number" min="0" value="0" placeholder="answer index" title="Answer Index" />
+          <input id="explain" placeholder="explain (optional)" title="Explanation" />
+          <button id="addBtn">Add</button>
+        </div>
+        <small id="msg"></small>
+      </div>
+
+      <div class="card">
+        <h3>Questions list</h3>
+        <div id="list">Loading...</div>
+      </div>
+    </div>
+
+    <script src="admin.js"></script>
+  </body>
+</html>

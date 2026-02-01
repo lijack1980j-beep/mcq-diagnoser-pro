@@ -1,0 +1,41 @@
+{
+  "questions": [
+    {
+      "topic": "math",
+      "difficulty": 1,
+      "question": "What is 7 × 8?",
+      "choices": ["54", "56", "58", "64"],
+      "answerIndex": 1,
+      "explain": "7 × 8 = 56."
+    },
+    {
+      "topic": "math",
+      "difficulty": 2,
+      "question": "Solve: 3x + 6 = 18",
+      "choices": ["x=2", "x=3", "x=4", "x=6"],
+      "answerIndex": 2,
+      "explain": "3x=12 → x=4."
+    },
+    {
+      "topic": "cs",
+      "difficulty": 1,
+      "question": "In JavaScript, what is typeof [] ?",
+      "choices": ["array", "object", "list", "tuple"],
+      "answerIndex": 1,
+      "explain": "Arrays are objects in JS."
+    },
+    {
+      "topic": "cs",
+      "difficulty": 3,
+      "question": "What does Promise.all do?",
+      "choices": [
+        "Runs promises sequentially",
+        "Resolves when all resolve, rejects if any reject",
+        "Ignores rejections",
+        "Returns the fastest resolved promise"
+      ],
+      "answerIndex": 1,
+      "explain": "Promise.all waits for all; rejects on the first rejection."
+    }
+  ]
+}
