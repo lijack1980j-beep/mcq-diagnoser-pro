@@ -159,29 +159,7 @@
         </label>
       `).join("");
 
-      // style choice rows with your theme (no extra css file needed)
-      choicesEl.querySelectorAll(".choiceRow").forEach((row) => {
-        row.style.display = "flex";
-        row.style.gap = "12px";
-        row.style.alignItems = "flex-start";
-        row.style.padding = "14px";
-        row.style.margin = "10px 0";
-        row.style.borderRadius = "16px";
-        row.style.cursor = "pointer";
-        row.style.border = "1px solid rgba(255,255,255,.10)";
-        row.style.background = "rgba(0,0,0,.28)";
-        row.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,.03)";
-
-        row.addEventListener("mouseenter", () => {
-          row.style.borderColor = "rgba(255,212,0,.35)";
-          row.style.boxShadow = "0 14px 40px rgba(0,0,0,.35)";
-        });
-        row.addEventListener("mouseleave", () => {
-          row.style.borderColor = "rgba(255,255,255,.10)";
-          row.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,.03)";
-        });
-      });
-
+      // bind selection
       choicesEl.querySelectorAll('input[name="ans"]').forEach((radio) => {
         radio.addEventListener("change", (e) => {
           selected = Number(e.target.value);
