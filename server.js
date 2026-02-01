@@ -3,13 +3,19 @@ import session from "express-session";
 import bcrypt from "bcryptjs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { openDb } from "./db.js";
+import { createClient } from "@supabase/supabase-js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const db = openDb();
+
+// ✅ Put your Supabase credentials here (no .env)
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+
+// Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(
@@ -66,7 +72,7 @@ const EDUCATION_SYSTEMS = {
     { name: "Advanced", min: 80, max: 90 },
     { name: "Expert", min: 91, max: 100 }
   ],
-  "school": [
+  school: [
     { name: "Primary school", min: 0, max: 29 },
     { name: "Middle school", min: 30, max: 54 },
     { name: "High school", min: 55, max: 74 },
@@ -90,7 +96,7 @@ function levelFromScore(score, systemKey) {
 }
 
 /** ---------- Auth (upgrade #1) ---------- **/
-app.post("/api/auth/register", (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: "username + password required" });
   if (String(username).length < 3) return res.status(400).json({ error: "username too short" });
@@ -98,21 +104,39 @@ app.post("/api/auth/register", (req, res) => {
 
   const pass_hash = bcrypt.hashSync(String(password), 10);
 
-  try {
-    const info = db
-      .prepare("INSERT INTO users (username, pass_hash, role) VALUES (?, ?, 'user')")
-      .run(String(username), pass_hash);
-    req.session.user = { id: info.lastInsertRowid, username: String(username), role: "user" };
-    res.json({ ok: true, user: req.session.user });
-  } catch (e) {
-    res.status(409).json({ error: "Username already exists" });
-  }
+  // Check if username exists
+  const { data: existing, error: e1 } = await supabase
+    .from("users")
+    .select("id")
+    .eq("username", String(username))
+    .limit(1);
+
+  if (e1) return res.status(500).json({ error: e1.message });
+  if (existing && existing.length) return res.status(409).json({ error: "Username already exists" });
+
+  // Insert user
+  const { data, error } = await supabase
+    .from("users")
+    .insert({ username: String(username), pass_hash, role: "user" })
+    .select("id, username, role")
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  req.session.user = { id: data.id, username: data.username, role: data.role };
+  res.json({ ok: true, user: req.session.user });
 });
 
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body || {};
-  const row = db.prepare("SELECT * FROM users WHERE username=?").get(String(username || ""));
-  if (!row) return res.status(401).json({ error: "Invalid login" });
+
+  const { data: row, error } = await supabase
+    .from("users")
+    .select("id, username, role, pass_hash")
+    .eq("username", String(username || ""))
+    .single();
+
+  if (error || !row) return res.status(401).json({ error: "Invalid login" });
 
   const ok = bcrypt.compareSync(String(password || ""), row.pass_hash);
   if (!ok) return res.status(401).json({ error: "Invalid login" });
@@ -129,44 +153,55 @@ app.get("/api/auth/me", (req, res) => {
   res.json({ user: req.session.user ?? null });
 });
 
-/** Create first admin automatically if not exists (optional convenience)
- *  If you want: create admin by registering then update role in DB manually.
- */
-
 /** ---------- Admin (upgrade #2) ---------- **/
-app.get("/api/admin/questions", requireAdmin, (req, res) => {
-  const rows = db.prepare("SELECT id, topic, difficulty, question FROM questions ORDER BY id DESC").all();
-  res.json({ questions: rows });
+app.get("/api/admin/questions", requireAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from("questions")
+    .select("id, topic, difficulty, question")
+    .order("id", { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ questions: data || [] });
 });
 
-app.post("/api/admin/questions", requireAdmin, (req, res) => {
+app.post("/api/admin/questions", requireAdmin, async (req, res) => {
   const { topic, difficulty, question, choices, answerIndex, explain } = req.body || {};
-  if (!topic || !question || !Array.isArray(choices) || choices.length < 2)
+  if (!topic || !question || !Array.isArray(choices) || choices.length < 2) {
     return res.status(400).json({ error: "Invalid question data" });
+  }
 
   const diff = clamp(Number(difficulty || 1), 1, 5);
   const ans = Number(answerIndex);
-  if (!Number.isInteger(ans) || ans < 0 || ans >= choices.length)
+  if (!Number.isInteger(ans) || ans < 0 || ans >= choices.length) {
     return res.status(400).json({ error: "answerIndex out of range" });
+  }
 
-  const info = db
-    .prepare(
-      `INSERT INTO questions (topic, difficulty, question, choices_json, answer_index, explain)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    )
-    .run(String(topic), diff, String(question), JSON.stringify(choices), ans, String(explain || ""));
+  const { data, error } = await supabase
+    .from("questions")
+    .insert({
+      topic: String(topic),
+      difficulty: diff,
+      question: String(question),
+      choices: choices, // JSONB
+      answer_index: ans,
+      explain: String(explain || "")
+    })
+    .select("id")
+    .single();
 
-  res.json({ ok: true, id: info.lastInsertRowid });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, id: data.id });
 });
 
-app.delete("/api/admin/questions/:id", requireAdmin, (req, res) => {
+app.delete("/api/admin/questions/:id", requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  db.prepare("DELETE FROM questions WHERE id=?").run(id);
+  const { error } = await supabase.from("questions").delete().eq("id", id);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
 
 /** ---------- Quiz API (practice + exam timer) (upgrade #3 + saving #1) ---------- **/
-app.post("/api/quiz/start", requireAuth, (req, res) => {
+app.post("/api/quiz/start", requireAuth, async (req, res) => {
   const { mode, educationSystem, numQuestions, secondsPerQuestion, topics } = req.body || {};
 
   const m = mode === "exam" ? "exam" : "practice";
@@ -175,30 +210,23 @@ app.post("/api/quiz/start", requireAuth, (req, res) => {
   const spq = clamp(Number(secondsPerQuestion || 30), 10, 300);
 
   // Load questions (optionally filter by topics)
-  let rows;
+  let query = supabase
+    .from("questions")
+    .select("id, topic, difficulty, question, choices, answer_index, explain");
+
   if (Array.isArray(topics) && topics.length) {
-    const placeholders = topics.map(() => "?").join(",");
-    rows = db
-      .prepare(
-        `SELECT id, topic, difficulty, question, choices_json, answer_index, explain
-         FROM questions WHERE topic IN (${placeholders})`
-      )
-      .all(...topics.map(String));
-  } else {
-    rows = db
-      .prepare(
-        `SELECT id, topic, difficulty, question, choices_json, answer_index, explain
-         FROM questions`
-      )
-      .all();
+    query = query.in("topic", topics.map(String));
   }
 
-  const bank = rows.map((r) => ({
+  const { data: rows, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+
+  const bank = (rows || []).map((r) => ({
     id: r.id,
     topic: r.topic,
     difficulty: r.difficulty,
     question: r.question,
-    choices: JSON.parse(r.choices_json),
+    choices: Array.isArray(r.choices) ? r.choices : [],
     answerIndex: r.answer_index,
     explain: r.explain || ""
   }));
@@ -206,16 +234,23 @@ app.post("/api/quiz/start", requireAuth, (req, res) => {
   if (!bank.length) return res.status(400).json({ error: "No questions available" });
 
   // Create attempt record
-  const attemptInfo = db
-    .prepare(
-      `INSERT INTO attempts (user_id, started_at, mode, education_system, num_questions, seconds_per_question)
-       VALUES (?, datetime('now'), ?, ?, ?, ?)`
-    )
-    .run(req.session.user.id, m, edu, n, spq);
+  const { data: attemptRow, error: e2 } = await supabase
+    .from("attempts")
+    .insert({
+      user_id: req.session.user.id,
+      mode: m,
+      education_system: edu,
+      num_questions: n,
+      seconds_per_question: spq
+    })
+    .select("id")
+    .single();
 
-  const attemptId = attemptInfo.lastInsertRowid;
+  if (e2) return res.status(500).json({ error: e2.message });
 
-  // Server keeps attempt state in session (lightweight)
+  const attemptId = attemptRow.id;
+
+  // Keep attempt state in session
   req.session.quiz = {
     attemptId,
     mode: m,
@@ -225,7 +260,7 @@ app.post("/api/quiz/start", requireAuth, (req, res) => {
     overallSkill: 50,
     targetDifficulty: 2,
     asked: [],
-    topicStats: {}, // topic -> {correct,total,score}
+    topicStats: {},
     index: 1,
     bank
   };
@@ -243,10 +278,8 @@ app.get("/api/quiz/next", requireAuth, (req, res) => {
   const nextQ = pickNextQuestion(qz.bank, askedSet, qz.targetDifficulty);
   if (!nextQ) return res.json({ done: true });
 
-  // Store current question id (so we can validate answer)
   qz.currentQuestionId = nextQ.id;
 
-  // IMPORTANT: do NOT send correct answer to client
   res.json({
     done: false,
     index: qz.index,
@@ -270,8 +303,9 @@ app.post("/api/quiz/answer", requireAuth, (req, res) => {
 
   const { questionId, choiceIndex, timedOut } = req.body || {};
   const qid = Number(questionId);
-  if (!Number.isInteger(qid) || qid !== qz.currentQuestionId)
+  if (!Number.isInteger(qid) || qid !== qz.currentQuestionId) {
     return res.status(400).json({ error: "Invalid question id" });
+  }
 
   const q = qz.bank.find((x) => x.id === qid);
   if (!q) return res.status(400).json({ error: "Question not found" });
@@ -281,23 +315,18 @@ app.post("/api/quiz/answer", requireAuth, (req, res) => {
 
   const correct = !isTimeout && selected === q.answerIndex;
 
-  // update overall
   qz.overallSkill = updateSkill(qz.overallSkill, q.difficulty, correct);
 
-  // topic stats
   qz.topicStats[q.topic] ??= { correct: 0, total: 0, score: 50 };
   const t = qz.topicStats[q.topic];
   t.total += 1;
   if (correct) t.correct += 1;
   t.score = updateSkill(t.score, q.difficulty, correct);
 
-  // adapt difficulty
   qz.targetDifficulty = clamp(qz.targetDifficulty + (correct ? 1 : -1), 1, 5);
 
-  // mark asked
   if (!qz.asked.includes(qid)) qz.asked.push(qid);
 
-  // progress
   const currentLevel = levelFromScore(qz.overallSkill, qz.educationSystem);
 
   const feedback = {
@@ -316,7 +345,7 @@ app.post("/api/quiz/answer", requireAuth, (req, res) => {
   });
 });
 
-app.post("/api/quiz/finish", requireAuth, (req, res) => {
+app.post("/api/quiz/finish", requireAuth, async (req, res) => {
   const qz = req.session.quiz;
   if (!qz) return res.status(400).json({ error: "No active quiz" });
 
@@ -329,29 +358,36 @@ app.post("/api/quiz/finish", requireAuth, (req, res) => {
     mode: qz.mode
   };
 
-  db.prepare(
-    `UPDATE attempts
-     SET finished_at=datetime('now'), final_score=?, final_level=?, details_json=?
-     WHERE id=? AND user_id=?`
-  ).run(finalScore, finalLevelStr, JSON.stringify(details), qz.attemptId, req.session.user.id);
+  const { error } = await supabase
+    .from("attempts")
+    .update({
+      finished_at: new Date().toISOString(),
+      final_score: finalScore,
+      final_level: finalLevelStr,
+      details: details
+    })
+    .eq("id", qz.attemptId)
+    .eq("user_id", req.session.user.id);
+
+  if (error) return res.status(500).json({ error: error.message });
 
   req.session.quiz = null;
 
   res.json({ ok: true, finalScore, finalLevel: finalLevelStr, details });
 });
 
-app.get("/api/history", requireAuth, (req, res) => {
-  const rows = db
-    .prepare(
-      `SELECT id, started_at, finished_at, mode, education_system, num_questions, seconds_per_question, final_score, final_level
-       FROM attempts
-       WHERE user_id=?
-       ORDER BY id DESC
-       LIMIT 30`
+app.get("/api/history", requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("attempts")
+    .select(
+      "id, started_at, finished_at, mode, education_system, num_questions, seconds_per_question, final_score, final_level"
     )
-    .all(req.session.user.id);
+    .eq("user_id", req.session.user.id)
+    .order("id", { ascending: false })
+    .limit(30);
 
-  res.json({ attempts: rows });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ attempts: data || [] });
 });
 
 /** ---------- Start ---------- **/
