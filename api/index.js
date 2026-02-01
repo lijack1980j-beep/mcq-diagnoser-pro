@@ -12,8 +12,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // ✅ Put your Supabase credentials here (no .env)
-const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+const SUPABASE_URL = "https://ylyvwytirhamoxmmikod.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlseXZ3eXRpcmhhbW94bW1pa29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTMwMDAsImV4cCI6MjA4NTQ2OTAwMH0.yjpmgEAPB9kGDAwUWyr47-97iOykeq9AUq3rwvF6aYo";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 app.use(express.json({ limit: "1mb" }));
