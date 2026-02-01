@@ -12,7 +12,168 @@
     .choice:hover{transform:translateY(-1px)}
     .choice input{margin-top:3px}
     .actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+    .ghost{background:#333}<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Questions</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .q-title{font-size:18px;margin:0 0 10px}
+    .meta{opacity:.8;font-size:13px;margin-bottom:10px}
+    .choice{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid #2b3a66;border-radius:10px;margin:8px 0;background:#0b0f1a;cursor:pointer}
+    .choice:hover{transform:translateY(-1px)}
+    .choice input{margin-top:3px}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
     .ghost{background:#333}
+    .danger{background:#b92b2b}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>MCQ Diagnoser</h1>
+
+    <div class="card actions">
+      <button id="logoutBtn" class="danger">Logout</button>
+      <button id="reloadBtn" class="ghost">Reload Bank</button>
+      <span id="status" style="opacity:.85"></span>
+    </div>
+
+    <div class="card" id="quizCard">
+      <div class="meta" id="meta"></div>
+      <h2 class="q-title" id="questionText">Loading…</h2>
+      <div id="choices"></div>
+
+      <div class="actions">
+        <button id="nextBtn">Next</button>
+        <span id="hint" style="opacity:.8"></span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    const statusEl = document.getElementById("status");
+    const metaEl = document.getElementById("meta");
+    const qTextEl = document.getElementById("questionText");
+    const choicesEl = document.getElementById("choices");
+    const hintEl = document.getElementById("hint");
+    const nextBtn = document.getElementById("nextBtn");
+
+    let bank = [];
+    let index = 0;
+    let selectedIndex = null;
+
+    function setStatus(msg){ statusEl.textContent = msg || ""; }
+
+    function logout(){
+      localStorage.removeItem("token");
+      location.href = "/";
+    }
+
+    async function fetchBank(){
+      const token = localStorage.getItem("token");
+      if (!token){
+        alert("Please login first");
+        location.href = "/";
+        return [];
+      }
+
+      setStatus("Loading questions…");
+      const res = await fetch("/api/bank", {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      const data = await res.json();
+      if (!res.ok){
+        setStatus("Error: " + (data.error || "Failed"));
+        return [];
+      }
+
+      setStatus("Loaded ✅");
+      return Array.isArray(data) ? data : [];
+    }
+
+    function renderQuestion(){
+      hintEl.textContent = "";
+      selectedIndex = null;
+
+      if (!bank.length){
+        qTextEl.textContent = "No questions found. Add questions in Supabase.";
+        choicesEl.innerHTML = "";
+        metaEl.textContent = "";
+        nextBtn.disabled = true;
+        return;
+      }
+
+      const q = bank[index];
+      metaEl.textContent = `Question ${index + 1} / ${bank.length} • Topic: ${q.topic || "-"} • Difficulty: ${q.difficulty || "-"}`;
+      qTextEl.textContent = q.question || "(No question text)";
+
+      const choices = Array.isArray(q.choices) ? q.choices : [];
+      choicesEl.innerHTML = choices.map((c, i) => `
+        <label class="choice">
+          <input type="radio" name="choice" value="${i}">
+          <div>${escapeHtml(String(c))}</div>
+        </label>
+      `).join("");
+
+      // listen selection
+      choicesEl.querySelectorAll('input[name="choice"]').forEach((radio) => {
+        radio.addEventListener("change", (e) => {
+          selectedIndex = Number(e.target.value);
+        });
+      });
+
+      nextBtn.disabled = false;
+    }
+
+    function escapeHtml(str){
+      return str
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function next(){
+      if (selectedIndex === null){
+        hintEl.textContent = "Choose an answer first.";
+        return;
+      }
+
+      // For now we just go next (no scoring yet)
+      index++;
+      if (index >= bank.length){
+        qTextEl.textContent = "✅ Finished! (You answered all questions)";
+        metaEl.textContent = "";
+        choicesEl.innerHTML = "";
+        hintEl.textContent = "";
+        nextBtn.disabled = true;
+        return;
+      }
+
+      renderQuestion();
+    }
+
+    document.getElementById("logoutBtn").onclick = logout;
+    document.getElementById("reloadBtn").onclick = async () => {
+      bank = await fetchBank();
+      index = 0;
+      renderQuestion();
+    };
+    nextBtn.onclick = next;
+
+    // init
+    (async function(){
+      bank = await fetchBank();
+      index = 0;
+      renderQuestion();
+    })();
+  </script>
+</body>
+</html>
     .danger{background:#b92b2b}
   </style>
 </head>
