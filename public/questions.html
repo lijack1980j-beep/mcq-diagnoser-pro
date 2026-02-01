@@ -1,135 +1,95 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Questions</title>
+  <title>Quiz • MCQ Diagnoser</title>
   <link rel="stylesheet" href="/style.css" />
-  <style>
-    .q-title{font-size:18px;margin:0 0 10px}
-    .meta{opacity:.8;font-size:13px;margin-bottom:10px}
-    .choice{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid #2b3a66;border-radius:10px;margin:8px 0;background:#0b0f1a;cursor:pointer}
-    .choice:hover{transform:translateY(-1px)}
-    .choice input{margin-top:3px}
-    .actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-    .ghost{background:#333}<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Questions</title>
-  <link rel="stylesheet" href="/style.css" />
-  <style>
-    .q-title{font-size:18px;margin:0 0 10px}
-    .meta{opacity:.8;font-size:13px;margin-bottom:10px}
-    .choice{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid #2b3a66;border-radius:10px;margin:8px 0;background:#0b0f1a;cursor:pointer}
-    .choice:hover{transform:translateY(-1px)}
-    .choice input{margin-top:3px}
-    .actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-    .ghost{background:#333}
-    .danger{background:#b92b2b}
-  </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <h1>MCQ Diagnoser</h1>
-
-    <div class="card actions">
-      <button id="logoutBtn" class="danger">Logout</button>
-      <button id="reloadBtn" class="ghost">Reload Bank</button>
-      <span id="status" style="opacity:.85"></span>
-    </div>
-
-    <div class="card" id="quizCard">
-      <div class="meta" id="meta"></div>
-      <h2 class="q-title" id="questionText">Loading…</h2>
-      <div id="choices"></div>
-
-      <div class="actions">
-        <button id="nextBtn">Next</button>
-        <span id="hint" style="opacity:.8"></span>
-      </div>
-    </div>
+  <!-- Glow background (same as index/admin) -->
+  <div class="bg">
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
+    <div class="glow g3"></div>
+    <div class="noise"></div>
   </div>
 
+  <main class="container">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">Q</div>
+        <div>
+          <div class="title">MCQ Diagnoser</div>
+          <div class="subtitle">Choose an answer • Next • Finish</div>
+        </div>
+      </div>
+
+      <div class="pill">
+        <span class="dot"></span>
+        <span id="who">Loading…</span>
+      </div>
+    </header>
+
+    <!-- Controls -->
+    <div class="card glass" style="margin-bottom:16px;">
+      <div class="actions" style="padding:16px 20px;">
+        <button class="btn ghost" id="reloadBtn" type="button">Reload Bank</button>
+        <button class="btn ghost" id="homeBtn" type="button">Home</button>
+        <button class="btn" id="logoutBtn" type="button" style="background:#b92b2b;color:white;">Logout</button>
+        <span class="status" id="status" style="margin-left:auto;"></span>
+      </div>
+    </div>
+
+    <!-- Quiz card -->
+    <section class="card glass">
+      <div class="cardHead">
+        <h2 id="progressTitle">Question</h2>
+        <p id="metaLine">Loading…</p>
+      </div>
+
+      <div style="padding: 0 20px 20px;">
+        <div id="questionText" style="font-size:20px;font-weight:850;margin:12px 0 14px;">
+          Loading…
+        </div>
+
+        <div id="choices"></div>
+
+        <div class="actions" style="padding:14px 0 0;">
+          <button class="btn primary" id="nextBtn" type="button">Next</button>
+          <span id="hint" style="color:rgba(255,255,255,.75);font-size:13px;"></span>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Yellow / Black • Glass UI • Vercel + Supabase</span>
+    </footer>
+  </main>
+
   <script type="module">
+    const whoEl = document.getElementById("who");
     const statusEl = document.getElementById("status");
-    const metaEl = document.getElementById("meta");
-    const qTextEl = document.getElementById("questionText");
+    const progressTitle = document.getElementById("progressTitle");
+    const metaLine = document.getElementById("metaLine");
+    const questionText = document.getElementById("questionText");
     const choicesEl = document.getElementById("choices");
     const hintEl = document.getElementById("hint");
     const nextBtn = document.getElementById("nextBtn");
 
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role") || "user";
+    const username = localStorage.getItem("username") || "";
+
     let bank = [];
-    let index = 0;
-    let selectedIndex = null;
+    let idx = 0;
+    let selected = null;
 
     function setStatus(msg){ statusEl.textContent = msg || ""; }
-
-    function logout(){
-      localStorage.removeItem("token");
-      location.href = "/";
-    }
-
-    async function fetchBank(){
-      const token = localStorage.getItem("token");
-      if (!token){
-        alert("Please login first");
-        location.href = "/";
-        return [];
-      }
-
-      setStatus("Loading questions…");
-      const res = await fetch("/api/bank", {
-        headers: { Authorization: "Bearer " + token }
-      });
-
-      const data = await res.json();
-      if (!res.ok){
-        setStatus("Error: " + (data.error || "Failed"));
-        return [];
-      }
-
-      setStatus("Loaded ✅");
-      return Array.isArray(data) ? data : [];
-    }
-
-    function renderQuestion(){
-      hintEl.textContent = "";
-      selectedIndex = null;
-
-      if (!bank.length){
-        qTextEl.textContent = "No questions found. Add questions in Supabase.";
-        choicesEl.innerHTML = "";
-        metaEl.textContent = "";
-        nextBtn.disabled = true;
-        return;
-      }
-
-      const q = bank[index];
-      metaEl.textContent = `Question ${index + 1} / ${bank.length} • Topic: ${q.topic || "-"} • Difficulty: ${q.difficulty || "-"}`;
-      qTextEl.textContent = q.question || "(No question text)";
-
-      const choices = Array.isArray(q.choices) ? q.choices : [];
-      choicesEl.innerHTML = choices.map((c, i) => `
-        <label class="choice">
-          <input type="radio" name="choice" value="${i}">
-          <div>${escapeHtml(String(c))}</div>
-        </label>
-      `).join("");
-
-      // listen selection
-      choicesEl.querySelectorAll('input[name="choice"]').forEach((radio) => {
-        radio.addEventListener("change", (e) => {
-          selectedIndex = Number(e.target.value);
-        });
-      });
-
-      nextBtn.disabled = false;
-    }
-
     function escapeHtml(str){
-      return str
+      return String(str ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
         .replaceAll(">","&gt;")
@@ -137,103 +97,35 @@
         .replaceAll("'","&#039;");
     }
 
-    function next(){
-      if (selectedIndex === null){
-        hintEl.textContent = "Choose an answer first.";
-        return;
+    function guard(){
+      if (!token){
+        alert("Please login first.");
+        location.href = "/";
+        return false;
       }
-
-      // For now we just go next (no scoring yet)
-      index++;
-      if (index >= bank.length){
-        qTextEl.textContent = "✅ Finished! (You answered all questions)";
-        metaEl.textContent = "";
-        choicesEl.innerHTML = "";
-        hintEl.textContent = "";
-        nextBtn.disabled = true;
-        return;
-      }
-
-      renderQuestion();
+      whoEl.textContent = username ? `${username} (${role})` : "Logged in";
+      return true;
     }
-
-    document.getElementById("logoutBtn").onclick = logout;
-    document.getElementById("reloadBtn").onclick = async () => {
-      bank = await fetchBank();
-      index = 0;
-      renderQuestion();
-    };
-    nextBtn.onclick = next;
-
-    // init
-    (async function(){
-      bank = await fetchBank();
-      index = 0;
-      renderQuestion();
-    })();
-  </script>
-</body>
-</html>
-    .danger{background:#b92b2b}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>MCQ Diagnoser</h1>
-
-    <div class="card actions">
-      <button id="logoutBtn" class="danger">Logout</button>
-      <button id="reloadBtn" class="ghost">Reload Bank</button>
-      <span id="status" style="opacity:.85"></span>
-    </div>
-
-    <div class="card" id="quizCard">
-      <div class="meta" id="meta"></div>
-      <h2 class="q-title" id="questionText">Loading…</h2>
-      <div id="choices"></div>
-
-      <div class="actions">
-        <button id="nextBtn">Next</button>
-        <span id="hint" style="opacity:.8"></span>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    const statusEl = document.getElementById("status");
-    const metaEl = document.getElementById("meta");
-    const qTextEl = document.getElementById("questionText");
-    const choicesEl = document.getElementById("choices");
-    const hintEl = document.getElementById("hint");
-    const nextBtn = document.getElementById("nextBtn");
-
-    let bank = [];
-    let index = 0;
-    let selectedIndex = null;
-
-    function setStatus(msg){ statusEl.textContent = msg || ""; }
 
     function logout(){
       localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("username");
       location.href = "/";
     }
 
     async function fetchBank(){
-      const token = localStorage.getItem("token");
-      if (!token){
-        alert("Please login first");
-        location.href = "/";
-        return [];
-      }
-
-      setStatus("Loading questions…");
+      setStatus("Loading…");
       const res = await fetch("/api/bank", {
         headers: { Authorization: "Bearer " + token }
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = []; }
+
       if (!res.ok){
-        setStatus("Error: " + (data.error || "Failed"));
+        setStatus("Error: " + (data?.error || ("HTTP " + res.status)));
         return [];
       }
 
@@ -241,82 +133,97 @@
       return Array.isArray(data) ? data : [];
     }
 
-    function renderQuestion(){
+    function render(){
       hintEl.textContent = "";
-      selectedIndex = null;
+      selected = null;
 
       if (!bank.length){
-        qTextEl.textContent = "No questions found. Add questions in Supabase.";
+        progressTitle.textContent = "No questions";
+        metaLine.textContent = "Add questions in Supabase (admin).";
+        questionText.textContent = "No questions found.";
         choicesEl.innerHTML = "";
-        metaEl.textContent = "";
         nextBtn.disabled = true;
         return;
       }
 
-      const q = bank[index];
-      metaEl.textContent = `Question ${index + 1} / ${bank.length} • Topic: ${q.topic || "-"} • Difficulty: ${q.difficulty || "-"}`;
-      qTextEl.textContent = q.question || "(No question text)";
+      const q = bank[idx];
+      progressTitle.textContent = `Question ${idx + 1} / ${bank.length}`;
+      metaLine.textContent = `Topic: ${q.topic || "-"} • Difficulty: ${q.difficulty || "-"}`;
+      questionText.textContent = q.question || "(No question text)";
 
       const choices = Array.isArray(q.choices) ? q.choices : [];
       choicesEl.innerHTML = choices.map((c, i) => `
-        <label class="choice">
-          <input type="radio" name="choice" value="${i}">
-          <div>${escapeHtml(String(c))}</div>
+        <label class="choiceRow">
+          <input type="radio" name="ans" value="${i}">
+          <div class="choiceText">${escapeHtml(c)}</div>
         </label>
       `).join("");
 
-      // listen selection
-      choicesEl.querySelectorAll('input[name="choice"]').forEach((radio) => {
+      // style choice rows with your theme (no extra css file needed)
+      choicesEl.querySelectorAll(".choiceRow").forEach((row) => {
+        row.style.display = "flex";
+        row.style.gap = "12px";
+        row.style.alignItems = "flex-start";
+        row.style.padding = "14px";
+        row.style.margin = "10px 0";
+        row.style.borderRadius = "16px";
+        row.style.cursor = "pointer";
+        row.style.border = "1px solid rgba(255,255,255,.10)";
+        row.style.background = "rgba(0,0,0,.28)";
+        row.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,.03)";
+
+        row.addEventListener("mouseenter", () => {
+          row.style.borderColor = "rgba(255,212,0,.35)";
+          row.style.boxShadow = "0 14px 40px rgba(0,0,0,.35)";
+        });
+        row.addEventListener("mouseleave", () => {
+          row.style.borderColor = "rgba(255,255,255,.10)";
+          row.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,.03)";
+        });
+      });
+
+      choicesEl.querySelectorAll('input[name="ans"]').forEach((radio) => {
         radio.addEventListener("change", (e) => {
-          selectedIndex = Number(e.target.value);
+          selected = Number(e.target.value);
         });
       });
 
       nextBtn.disabled = false;
     }
 
-    function escapeHtml(str){
-      return str
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
     function next(){
-      if (selectedIndex === null){
+      if (selected === null){
         hintEl.textContent = "Choose an answer first.";
         return;
       }
 
-      // For now we just go next (no scoring yet)
-      index++;
-      if (index >= bank.length){
-        qTextEl.textContent = "✅ Finished! (You answered all questions)";
-        metaEl.textContent = "";
+      idx++;
+      if (idx >= bank.length){
+        progressTitle.textContent = "✅ Finished";
+        metaLine.textContent = "";
+        questionText.textContent = "You reached the end of the question bank.";
         choicesEl.innerHTML = "";
-        hintEl.textContent = "";
         nextBtn.disabled = true;
+        hintEl.textContent = "";
         return;
       }
-
-      renderQuestion();
+      render();
     }
 
     document.getElementById("logoutBtn").onclick = logout;
     document.getElementById("reloadBtn").onclick = async () => {
       bank = await fetchBank();
-      index = 0;
-      renderQuestion();
+      idx = 0;
+      render();
     };
+    document.getElementById("homeBtn").onclick = () => location.href = "/";
     nextBtn.onclick = next;
 
-    // init
-    (async function(){
+    (async function init(){
+      if (!guard()) return;
       bank = await fetchBank();
-      index = 0;
-      renderQuestion();
+      idx = 0;
+      render();
     })();
   </script>
 </body>
