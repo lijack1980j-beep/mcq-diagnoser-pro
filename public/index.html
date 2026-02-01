@@ -1,37 +1,102 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MCQ Diagnoser</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
+
 <body>
-  <div class="wrap">
-    <h1>MCQ Diagnoser (Vercel)</h1>
-
-    <div class="card">
-      <h2>Register</h2>
-      <input id="rUser" placeholder="username" />
-      <input id="rPass" placeholder="password" type="password" />
-      <button id="registerBtn">Register</button>
-    </div>
-
-    <div class="card">
-      <h2>Login</h2>
-      <input id="lUser" placeholder="username" />
-      <input id="lPass" placeholder="password" type="password" />
-      <button id="loginBtn">Login</button>
-      <p id="status"></p>
-    </div>
-
-    <div class="card">
-      <h2>Load Question Bank</h2>
-      <button id="bankBtn">Load Bank</button>
-      <pre id="bankOut"></pre>
-    </div>
+  <!-- Glow background -->
+  <div class="bg">
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
+    <div class="glow g3"></div>
+    <div class="noise"></div>
   </div>
 
-  <script type="module" src="/app.js"></script>
+  <main class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">M</div>
+        <div>
+          <div class="title">MCQ Diagnoser</div>
+          <div class="subtitle">Smart level diagnosis • Practice • Admin editor</div>
+        </div>
+      </div>
+
+      <div class="pill" id="sessionPill">
+        <span class="dot"></span>
+        <span id="sessionText">Not logged in</span>
+      </div>
+    </header>
+
+    <section class="grid">
+      <!-- LEFT: Login -->
+      <div class="card glass">
+        <div class="cardHead">
+          <h2>Login</h2>
+          <p>Access your questions and start diagnosing.</p>
+        </div>
+
+        <label class="field">
+          <span>Username</span>
+          <input id="lUser" type="text" autocomplete="username" placeholder="your username" />
+        </label>
+
+        <label class="field">
+          <span>Password</span>
+          <input id="lPass" type="password" autocomplete="current-password" placeholder="••••••••" />
+        </label>
+
+        <div class="actions">
+          <button class="btn primary" id="loginBtn">Login</button>
+          <button class="btn ghost" id="goRegisterBtn" type="button">New here? Register</button>
+        </div>
+
+        <div class="statusLine">
+          <span class="status" id="status"></span>
+        </div>
+      </div>
+
+      <!-- RIGHT: Register -->
+      <div class="card glass" id="registerCard">
+        <div class="cardHead">
+          <h2>Register</h2>
+          <p>Create an account in seconds.</p>
+        </div>
+
+        <label class="field">
+          <span>Username</span>
+          <input id="rUser" type="text" autocomplete="username" placeholder="choose a username" />
+        </label>
+
+        <label class="field">
+          <span>Password</span>
+          <input id="rPass" type="password" autocomplete="new-password" placeholder="min 6 characters" />
+        </label>
+
+        <div class="actions">
+          <button class="btn primary" id="registerBtn">Create account</button>
+          <button class="btn ghost" id="goLoginBtn" type="button">Already have an account?</button>
+        </div>
+
+        <div class="hintBox">
+          <div class="hintTitle">Admin access</div>
+          <div class="hintText">
+            If your role is <b>admin</b>, after login you’ll be redirected to the secure editor automatically.
+          </div>
+          <button class="btn warn" id="adminEnterBtn" type="button">Go to Admin Editor</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Yellow / Black UI • Glassmorphism • Vercel + Supabase</span>
+    </footer>
+  </main>
+
+  <script src="/app.js"></script>
 </body>
 </html>
