@@ -79,6 +79,23 @@ async function login() {
   alert("Login success");
 }
 
+// ✅ LOAD QUESTIONS (AUTH REQUIRED)
+async function loadBank() {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("/api/bank", {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  });
+
+  if (!res.ok) throw new Error("Failed to load bank");
+
+  return res.json();
+}
+
+
+
 
 let bank = null;
 let state = null;
@@ -257,5 +274,6 @@ restartBtn.addEventListener("click", () => {
   quizCard.classList.add("hidden");
   setupCard.classList.remove("hidden");
 });
+
 
 
