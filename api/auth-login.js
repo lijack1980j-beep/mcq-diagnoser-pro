@@ -20,5 +20,9 @@ export default async function handler(req, res) {
 
   const token = signToken({ id: user.id, role: user.role, username: user.username });
 
-  res.status(200).json({ ok: true, token, user: { id: user.id, username: user.username, role: user.role } });
+  res.status(200).json({
+    ok: true,
+    token,
+    user: { id: user.id, username: user.username, role: user.role }
+  });
 }
