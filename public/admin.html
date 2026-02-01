@@ -1,40 +1,129 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin - MCQ</title>
-    <link rel="stylesheet" href="app.css" />
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="topbar">
-        <h2>Admin Panel</h2>
-        <a href="/">Home</a>
-      </div>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin • MCQ Diagnoser</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
 
-      <div class="card">
-        <h3>Add question</h3>
-        <div class="row">
-          <input id="topic" placeholder="topic (e.g. math)" title="Topic" />
-          <input id="difficulty" type="number" min="1" max="5" value="2" placeholder="difficulty" title="Difficulty" />
+<body>
+  <!-- Glow background -->
+  <div class="bg">
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
+    <div class="glow g3"></div>
+    <div class="noise"></div>
+  </div>
+
+  <main class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <div class="title">Admin Editor</div>
+          <div class="subtitle">Create • manage • delete question bank</div>
         </div>
-        <textarea id="question" placeholder="Question text"></textarea>
-        <textarea id="choices" placeholder='Choices JSON, example: ["A","B","C","D"]'></textarea>
-        <div class="row">
-          <input id="answerIndex" type="number" min="0" value="0" placeholder="answer index" title="Answer Index" />
-          <input id="explain" placeholder="explain (optional)" title="Explanation" />
-          <button id="addBtn">Add</button>
+      </div>
+
+      <div class="pill">
+        <span class="dot"></span>
+        <span id="who">Checking…</span>
+      </div>
+    </header>
+
+    <section class="gridAdmin">
+      <!-- Left: Create -->
+      <div class="card glass">
+        <div class="cardHead">
+          <h2>Add Question</h2>
+          <p>Build your question bank for users.</p>
         </div>
-        <small id="msg"></small>
+
+        <div class="pad">
+          <label class="field" style="padding:0 0 10px">
+            <span>Topic</span>
+            <input id="topic" placeholder="math / biology / german ..." />
+          </label>
+
+          <label class="field" style="padding:0 0 10px">
+            <span>Difficulty (1–5)</span>
+            <input id="difficulty" type="number" min="1" max="5" value="2" />
+          </label>
+
+          <label class="field" style="padding:0 0 10px">
+            <span>Question</span>
+            <input id="question" placeholder="Write the question text…" />
+          </label>
+
+          <div class="twoCol">
+            <label class="field" style="padding:0">
+              <span>Choice A</span>
+              <input id="c0" placeholder="Choice A" />
+            </label>
+            <label class="field" style="padding:0">
+              <span>Choice B</span>
+              <input id="c1" placeholder="Choice B" />
+            </label>
+            <label class="field" style="padding:0">
+              <span>Choice C</span>
+              <input id="c2" placeholder="Choice C (optional)" />
+            </label>
+            <label class="field" style="padding:0">
+              <span>Choice D</span>
+              <input id="c3" placeholder="Choice D (optional)" />
+            </label>
+          </div>
+
+          <label class="field" style="padding:10px 0 10px">
+            <span>Correct Answer</span>
+            <select id="answerIndex" class="select">
+              <option value="0">A</option>
+              <option value="1">B</option>
+              <option value="2">C</option>
+              <option value="3">D</option>
+            </select>
+          </label>
+
+          <label class="field" style="padding:0 0 10px">
+            <span>Explanation (optional)</span>
+            <input id="explain" placeholder="Short explanation shown after answer…" />
+          </label>
+
+          <div class="actions" style="padding:10px 0 0">
+            <button class="btn primary" id="saveBtn">Save question</button>
+            <button class="btn ghost" id="clearBtn" type="button">Clear</button>
+          </div>
+
+          <div class="statusLine" style="padding:10px 0 0">
+            <span class="status" id="status"></span>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <h3>Questions list</h3>
-        <div id="list">Loading...</div>
-      </div>
-    </div>
+      <!-- Right: List -->
+      <div class="card glass">
+        <div class="cardHead">
+          <h2>Question Bank</h2>
+          <p>Search, filter, delete. (Admin only)</p>
+        </div>
 
-    <script src="admin.js"></script>
-  </body>
+        <div class="pad">
+          <div class="toolbar">
+            <input id="search" class="search" placeholder="Search by text…" />
+            <input id="topicFilter" class="search" placeholder="Filter topic (exact)" />
+            <button class="btn ghost" id="refreshBtn" type="button">Refresh</button>
+            <button class="btn ghost" id="logoutBtn" type="button">Logout</button>
+          </div>
+
+          <div id="list" class="list"></div>
+
+          <div class="footerMini" id="count"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/admin.js"></script>
+</body>
 </html>
