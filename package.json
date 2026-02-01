@@ -1,20 +1,15 @@
 {
-  "name": "mcq-diagnoser-pro",
+  "name": "mcq-diagnoser-vercel",
   "version": "1.0.0",
-  "description": "Online MCQ education level diagnoser with admin panel, quiz engine, and Supabase database",
   "type": "module",
-  "main": "server.js",
+  "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "engines": {
-    "node": ">=18"
+    "dev": "vercel dev",
+    "start": "vercel dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
     "bcryptjs": "^2.4.3",
-    "express": "^4.19.2",
-    "express-session": "^1.17.3"
+    "jsonwebtoken": "^9.0.2"
   }
 }
