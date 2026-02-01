@@ -222,3 +222,121 @@ body{
 @media (max-width: 900px){
   .grid{ grid-template-columns: 1fr; }
 }
+/* ---------- Admin extras ---------- */
+.gridAdmin{
+  display:grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap:18px;
+}
+.pad{ padding: 14px 20px 20px; }
+
+.twoCol{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+
+.select{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  outline:none;
+  background: rgba(0,0,0,.35);
+  color: var(--text);
+}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-bottom: 12px;
+}
+
+.search{
+  flex: 1 1 160px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  outline:none;
+  background: rgba(0,0,0,.35);
+  color: var(--text);
+}
+
+.list{
+  display:grid;
+  gap:10px;
+  max-height: 520px;
+  overflow:auto;
+  padding-right: 6px;
+}
+
+.item{
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(0,0,0,.22);
+}
+.row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.spacer{ flex:1; }
+
+.badge{
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,212,0,.14);
+  border: 1px solid rgba(255,212,0,.30);
+}
+
+.qtext{
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.small{
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,.70);
+}
+
+.btnTiny{
+  border:0;
+  border-radius: 12px;
+  padding: 9px 10px;
+  font-weight: 850;
+  cursor:pointer;
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.btnTiny:hover{ filter: brightness(1.05); }
+
+.btnTiny.danger{
+  background: rgba(185,43,43,.18);
+  border-color: rgba(185,43,43,.32);
+}
+
+.empty{
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px dashed rgba(255,255,255,.15);
+  color: rgba(255,255,255,.75);
+}
+
+.footerMini{
+  margin-top: 10px;
+  color: rgba(255,255,255,.60);
+  font-size: 12px;
+}
+
+@media (max-width: 900px){
+  .gridAdmin{ grid-template-columns: 1fr; }
+  .twoCol{ grid-template-columns: 1fr; }
+}
