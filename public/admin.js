@@ -35,7 +35,7 @@ function guard() {
   }
   if (role !== "admin") {
     alert("Admin only.");
-    window.location.href = "/questions.html";
+    window.location.href = "/admin-login.html";
     return false;
   }
   whoEl.textContent = username ? `Admin: ${username}` : "Admin";
@@ -210,3 +210,4 @@ document.getElementById("topicFilter").addEventListener("input", () => loadQuest
 
 // init
 if (guard()) loadQuestions();
+
