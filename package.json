@@ -1,17 +1,20 @@
 {
-  "name": "mcq-diagnoser-web",
+  "name": "mcq-diagnoser-pro",
   "version": "1.0.0",
+  "description": "Online MCQ education level diagnoser with admin panel, quiz engine, and Supabase database",
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
-    "all": "^0.0.0",
-    "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.6.2",
-    "express": "^4.22.1",
-    "express-session": "^1.19.0",
-    "prompts": "^2.4.2"
+    "@supabase/supabase-js": "^2.39.3",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3"
   }
 }
