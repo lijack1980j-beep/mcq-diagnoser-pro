@@ -3,33 +3,53 @@ import { supabase } from "./_supabase.js";
 import { signToken } from "./_jwt.js";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  try {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
 
-  const { username, password } = req.body || {};
-  if (!username || !password) return res.status(400).json({ error: "username + password required" });
-  if (String(username).length < 3) return res.status(400).json({ error: "username too short" });
-  if (String(password).length < 6) return res.status(400).json({ error: "password too short" });
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: "username + password required" });
+    }
 
-  const pass_hash = bcrypt.hashSync(String(password), 10);
+    const pass_hash = bcrypt.hashSync(String(password), 10);
 
-  const { data: existing, error: e1 } = await supabase
-    .from("users")
-    .select("id")
-    .eq("username", String(username))
-    .limit(1);
+    const { data: existing, error: e1 } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", String(username))
+      .limit(1);
 
-  if (e1) return res.status(500).json({ error: e1.message });
-  if (existing?.length) return res.status(409).json({ error: "Username already exists" });
+    if (e1) {
+      console.error("SUPABASE SELECT ERROR:", e1);
+      return res.status(500).json({ error: e1.message });
+    }
 
-  const { data: user, error } = await supabase
-    .from("users")
-    .insert({ username: String(username), pass_hash, role: "user" })
-    .select("id, username, role")
-    .single();
+    if (existing?.length) {
+      return res.status(409).json({ error: "Username already exists" });
+    }
 
-  if (error) return res.status(500).json({ error: error.message });
+    const { data: user, error } = await supabase
+      .from("users")
+      .insert({ username, pass_hash, role: "user" })
+      .select("id, username, role")
+      .single();
 
-  const token = signToken({ id: user.id, role: user.role, username: user.username });
+    if (error) {
+      console.error("SUPABASE INSERT ERROR:", error);
+      return res.status(500).json({ error: error.message });
+    }
 
-  res.status(200).json({ ok: true, token, user });
+    const token = signToken({
+      id: user.id,
+      role: user.role,
+      username: user.username
+    });
+
+    res.status(200).json({ ok: true, token, user });
+  } catch (err) {
+    console.error("REGISTER CRASH:", err);
+    res.status(500).json({ error: "Server crashed" });
+  }
 }
