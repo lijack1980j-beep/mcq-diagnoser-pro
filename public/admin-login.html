@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Login • MCQ Diagnoser</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <!-- Glow background -->
+  <div class="bg">
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
+    <div class="glow g3"></div>
+    <div class="noise"></div>
+  </div>
+
+  <main class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <div class="title">Admin Login</div>
+          <div class="subtitle">Secure access to the editor</div>
+        </div>
+      </div>
+
+      <div class="pill">
+        <span class="dot"></span>
+        <span id="who">Not logged in</span>
+      </div>
+    </header>
+
+    <section class="card glass">
+      <div class="cardHead">
+        <h2>Enter Admin Editor</h2>
+        <p>Only admin accounts can access the editor.</p>
+      </div>
+
+      <label class="field">
+        <span>Username</span>
+        <input id="user" type="text" autocomplete="username" placeholder="admin username" />
+      </label>
+
+      <label class="field">
+        <span>Password</span>
+        <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••" />
+      </label>
+
+      <div class="actions">
+        <button class="btn primary" id="loginBtn" type="button">Login as Admin</button>
+        <button class="btn ghost" id="homeBtn" type="button">Back to Home</button>
+      </div>
+
+      <div class="statusLine">
+        <span class="status" id="status"></span>
+      </div>
+
+      <div class="hintBox">
+        <div class="hintTitle">Tip</div>
+        <div class="hintText">
+          If you don’t have admin role, you’ll be redirected to the quiz page.
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Yellow / Black • Glass UI • Vercel + Supabase</span>
+    </footer>
+  </main>
+
+  <script src="/admin-login.js"></script>
+</body>
+</html>
