@@ -44,8 +44,8 @@ async function login() {
       return;
     }
 
- localStorage.setItem("token", data.token);
-setStatus("Login success ✅");
+localStorage.setItem("token", data.token);
+location.assign("/questions.html");
 
 // ✅ GO TO QUESTIONS PAGE
 window.location.href = "/questions.html";
@@ -79,5 +79,6 @@ async function loadBank() {
 document.getElementById("registerBtn").onclick = register;
 document.getElementById("loginBtn").onclick = login;
 document.getElementById("bankBtn").onclick = loadBank;
+
 
 
