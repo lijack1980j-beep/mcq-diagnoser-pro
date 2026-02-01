@@ -235,3 +235,4 @@ restartBtn.addEventListener("click", () => {
   quizCard.classList.add("hidden");
   setupCard.classList.remove("hidden");
 });
+
