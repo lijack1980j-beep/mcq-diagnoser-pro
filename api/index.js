@@ -12,15 +12,16 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // ✅ Put your Supabase credentials here (no .env)
-const SUPABASE_URL = "https://ylyvwytirhamoxmmikod.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlseXZ3eXRpcmhhbW94bW1pa29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTMwMDAsImV4cCI6MjA4NTQ2OTAwMH0.yjpmgEAPB9kGDAwUWyr47-97iOykeq9AUq3rwvF6aYo";
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 app.use(express.json({ limit: "1mb" }));
 
-// ⚠️ On Vercel you MUST set cookie secure correctly behind proxy
+// ✅ IMPORTANT on Vercel
 app.set("trust proxy", 1);
 
+// ✅ Sessions (still not perfect in serverless, but will run)
 app.use(
   session({
     secret: "change-this-secret",
@@ -29,13 +30,23 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: true // Vercel uses https
+      secure: true
     }
   })
 );
 
-// Serve static files (public)
+// ✅ Serve static files (public) from project root
 app.use(express.static(path.join(__dirname, "..", "public")));
+
+/** ---------- Debug route (so Vercel shows errors) ---------- **/
+app.get("/api/health", async (req, res) => {
+  const { data, error } = await supabase.from("questions").select("id").limit(1);
+  res.json({
+    ok: true,
+    sessionUser: req.session.user ?? null,
+    supabase: error ? { ok: false, error: error.message } : { ok: true, sample: data }
+  });
+});
 
 /** ---------- Helpers ---------- **/
 function requireAuth(req, res, next) {
@@ -66,7 +77,7 @@ function pickNextQuestion(questions, askedIds, targetDifficulty) {
   return top[Math.floor(Math.random() * top.length)];
 }
 
-/** ---------- Education systems ---------- **/
+/** ---------- Education systems mapping ---------- **/
 const EDUCATION_SYSTEMS = {
   "general-6": [
     { name: "Beginner", min: 0, max: 24 },
@@ -75,23 +86,36 @@ const EDUCATION_SYSTEMS = {
     { name: "Upper-Intermediate", min: 65, max: 79 },
     { name: "Advanced", min: 80, max: 90 },
     { name: "Expert", min: 91, max: 100 }
+  ],
+  school: [
+    { name: "Primary school", min: 0, max: 29 },
+    { name: "Middle school", min: 30, max: 54 },
+    { name: "High school", min: 55, max: 74 },
+    { name: "University (undergrad)", min: 75, max: 89 },
+    { name: "University (advanced)", min: 90, max: 100 }
+  ],
+  "language-cefr": [
+    { name: "A1", min: 0, max: 19 },
+    { name: "A2", min: 20, max: 34 },
+    { name: "B1", min: 35, max: 54 },
+    { name: "B2", min: 55, max: 69 },
+    { name: "C1", min: 70, max: 84 },
+    { name: "C2", min: 85, max: 100 }
   ]
 };
+
 function levelFromScore(score, systemKey) {
   const levels = EDUCATION_SYSTEMS[systemKey] || EDUCATION_SYSTEMS["general-6"];
   const s = clamp(Math.round(score), 0, 100);
   return levels.find((L) => s >= L.min && s <= L.max)?.name ?? "Unrated";
 }
 
-/** ---------- Debug route (so you can see real errors) ---------- **/
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true, on: "vercel", sessionUser: req.session.user ?? null });
-});
-
 /** ---------- Auth ---------- **/
 app.post("/api/auth/register", async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: "username + password required" });
+  if (String(username).length < 3) return res.status(400).json({ error: "username too short" });
+  if (String(password).length < 6) return res.status(400).json({ error: "password too short" });
 
   const pass_hash = bcrypt.hashSync(String(password), 10);
 
@@ -141,7 +165,7 @@ app.get("/api/auth/me", (req, res) => {
   res.json({ user: req.session.user ?? null });
 });
 
-/** ---------- Admin questions ---------- **/
+/** ---------- Admin (example) ---------- **/
 app.get("/api/admin/questions", requireAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from("questions")
@@ -152,74 +176,5 @@ app.get("/api/admin/questions", requireAdmin, async (req, res) => {
   res.json({ questions: data || [] });
 });
 
-/** ---------- Quiz (minimal) ---------- **/
-app.post("/api/quiz/start", requireAuth, async (req, res) => {
-  const { mode, educationSystem, numQuestions, secondsPerQuestion } = req.body || {};
-  const m = mode === "exam" ? "exam" : "practice";
-  const edu = EDUCATION_SYSTEMS[educationSystem] ? educationSystem : "general-6";
-  const n = clamp(Number(numQuestions || 12), 3, 100);
-  const spq = clamp(Number(secondsPerQuestion || 30), 10, 300);
-
-  const { data: rows, error } = await supabase
-    .from("questions")
-    .select("id, topic, difficulty, question, choices, answer_index, explain");
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  const bank = (rows || []).map((r) => ({
-    id: r.id,
-    topic: r.topic,
-    difficulty: r.difficulty,
-    question: r.question,
-    choices: Array.isArray(r.choices) ? r.choices : [],
-    answerIndex: r.answer_index,
-    explain: r.explain || ""
-  }));
-
-  req.session.quiz = {
-    mode: m,
-    educationSystem: edu,
-    numQuestions: n,
-    secondsPerQuestion: spq,
-    overallSkill: 50,
-    targetDifficulty: 2,
-    asked: [],
-    topicStats: {},
-    index: 1,
-    bank
-  };
-
-  res.json({ ok: true });
-});
-
-app.get("/api/quiz/next", requireAuth, (req, res) => {
-  const qz = req.session.quiz;
-  if (!qz) return res.status(400).json({ error: "No active quiz" });
-
-  if (qz.index > qz.numQuestions) return res.json({ done: true });
-
-  const askedSet = new Set(qz.asked);
-  const nextQ = pickNextQuestion(qz.bank, askedSet, qz.targetDifficulty);
-  if (!nextQ) return res.json({ done: true });
-
-  qz.currentQuestionId = nextQ.id;
-
-  res.json({
-    done: false,
-    index: qz.index,
-    numQuestions: qz.numQuestions,
-    secondsPerQuestion: qz.secondsPerQuestion,
-    question: {
-      id: nextQ.id,
-      topic: nextQ.topic,
-      difficulty: nextQ.difficulty,
-      question: nextQ.question,
-      choices: nextQ.choices
-    },
-    score: Math.round(qz.overallSkill),
-    level: levelFromScore(qz.overallSkill, qz.educationSystem)
-  });
-});
-
-/** IMPORTANT: Do NOT call app.listen() on Vercel **/
+// ✅ Export serverless handler for Vercel
 export default serverless(app);
