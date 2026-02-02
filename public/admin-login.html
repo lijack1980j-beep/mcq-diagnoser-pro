@@ -8,7 +8,6 @@
 </head>
 
 <body>
-  <!-- Glow background -->
   <div class="bg">
     <div class="glow g1"></div>
     <div class="glow g2"></div>
@@ -21,53 +20,37 @@
       <div class="brand">
         <div class="logo">A</div>
         <div>
-          <div class="title">Admin Login</div>
-          <div class="subtitle">Secure access to the editor</div>
+          <div class="title">Admin Gate</div>
+          <div class="subtitle">Enter password to open editor</div>
         </div>
       </div>
 
       <div class="pill">
         <span class="dot"></span>
-        <span id="who">Not logged in</span>
+        <span>Protected</span>
       </div>
     </header>
 
     <section class="card glass">
       <div class="cardHead">
-        <h2>Enter Admin Editor</h2>
-        <p>Only admin accounts can access the editor.</p>
+        <h2>Admin Password</h2>
+        <p>This password is required to access the editor.</p>
       </div>
 
       <label class="field">
-        <span>Username</span>
-        <input id="user" type="text" autocomplete="username" placeholder="admin username" />
-      </label>
-
-      <label class="field">
         <span>Password</span>
-        <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••" />
+        <input id="pass" type="password" placeholder="••••••••" />
       </label>
 
       <div class="actions">
-        <button class="btn primary" id="loginBtn" type="button">Login as Admin</button>
-        <button class="btn ghost" id="homeBtn" type="button">Back to Home</button>
+        <button class="btn primary" id="goBtn" type="button">Enter</button>
+        <button class="btn ghost" id="homeBtn" type="button">Back</button>
       </div>
 
       <div class="statusLine">
         <span class="status" id="status"></span>
       </div>
-
-      <div class="hintBox">
-        <div class="hintTitle">Tip</div>
-        <div class="hintText">
-          If you don’t have admin role, you’ll be redirected to the quiz page.
-        </div>
-      </div>
     </section>
-
-    <footer class="footer">
-      <span>Yellow / Black • Glass UI • Vercel + Supabase</span>
-    </footer>
   </main>
 
   <script src="/admin-login.js"></script>
