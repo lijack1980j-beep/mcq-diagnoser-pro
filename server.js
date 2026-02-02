@@ -390,10 +390,35 @@ app.get("/api/history", requireAuth, async (req, res) => {
   res.json({ attempts: data || [] });
 });
 
+// ===== ADMIN AUTO-CREATION =====
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "admin"; // min 6 chars
+
+async function ensureAdminUser() {
+  const { data } = await supabase
+    .from("users")
+    .select("id")
+    .eq("role", "admin")
+    .limit(1);
+
+  if (data && data.length > 0) return;
+
+  const pass_hash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+
+  await supabase.from("users").insert({
+    username: ADMIN_USERNAME,
+    pass_hash,
+    role: "admin"
+  });
+
+  console.log("✅ Admin user created");
+}
+
 /** ---------- Start ---------- **/
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Running: http://localhost:${PORT}`);
   console.log(`Login page: http://localhost:${PORT}/`);
 });
+
 
