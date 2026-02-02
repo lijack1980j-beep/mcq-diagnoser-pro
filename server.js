@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 // ✅ Admin password (DO NOT hardcode if pushing to GitHub)
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChangeMe123";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "azertyu";
 
 // ✅ Put your Supabase credentials here (no .env)
 const SUPABASE_URL = "https://ylyvwytirhamoxmmikod.supabase.co";
@@ -395,7 +395,7 @@ app.get("/api/history", requireAuth, async (req, res) => {
 // ===== ADMIN AUTO-CREATION =====
 // ===== ADMIN AUTO-CREATION =====
 const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "azerty&é""; // the password you will type
+const ADMIN_PASSWORD = "azertyu"; // the password you will type
 
 async function ensureAdminUser() {
   const { data: existing, error: selErr } = await supabase
@@ -437,6 +437,7 @@ app.listen(PORT, async () => {
   console.log(`✅ Running: http://localhost:${PORT}`);
   console.log(`Login page: http://localhost:${PORT}/`);
 });
+
 
 
 
