@@ -391,29 +391,42 @@ app.get("/api/history", requireAuth, async (req, res) => {
 });
 
 // ===== ADMIN AUTO-CREATION =====
+// ===== ADMIN AUTO-CREATION =====
 const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin&é""; // min 6 chars
+const ADMIN_PASSWORD = "ChangeMe123"; // the password you will type
 
 async function ensureAdminUser() {
-  const { data } = await supabase
+  const { data: existing, error: selErr } = await supabase
     .from("users")
-    .select("id")
+    .select("id, username, role")
     .eq("role", "admin")
     .limit(1);
 
-  if (data && data.length > 0) return;
+  if (selErr) {
+    console.log("❌ Admin SELECT blocked:", selErr.message);
+    return;
+  }
+
+  if (existing && existing.length > 0) {
+    console.log("✅ Admin already exists:", existing[0].username);
+    return;
+  }
 
   const pass_hash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
 
-  await supabase.from("users").insert({
+  const { error: insErr } = await supabase.from("users").insert({
     username: ADMIN_USERNAME,
     pass_hash,
     role: "admin"
   });
 
-  console.log("✅ Admin user created");
-}
+  if (insErr) {
+    console.log("❌ Admin INSERT blocked:", insErr.message);
+    return;
+  }
 
+  console.log("✅ Admin user created:", ADMIN_USERNAME);
+}
 /** ---------- Start ---------- **/
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
@@ -422,6 +435,7 @@ app.listen(PORT, async () => {
   console.log(`✅ Running: http://localhost:${PORT}`);
   console.log(`Login page: http://localhost:${PORT}/`);
 });
+
 
 
 
