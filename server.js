@@ -37,11 +37,43 @@ function requireAuth(req, res, next) {
   next();
 }
 
-function requireAdmin(req, res, next) {
-  if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
-  if (req.session.user.role !== "admin") return res.status(403).json({ error: "Admin only" });
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* 🔽 PUT IT RIGHT HERE 🔽 */
+async function requireAdmin(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
+  // Re-check latest role from Supabase
+  const { data: row, error } = await supabase
+    .from("users")
+    .select("id, username, role")
+    .eq("id", req.session.user.id)
+    .maybeSingle();
+
+  if (error) {
+    return res.status(500).json({ error: "DB error: " + error.message });
+  }
+
+  if (!row) {
+    return res.status(401).json({ error: "User not found" });
+  }
+
+  // Update session with latest role
+  req.session.user = {
+    id: row.id,
+    username: row.username,
+    role: row.role
+  };
+
+  if (row.role !== "admin") {
+    return res.status(403).json({ error: "Admin only" });
+  }
+
   next();
 }
+/* 🔼 END HERE 🔼 */
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -437,6 +469,7 @@ app.listen(PORT, async () => {
   console.log(`✅ Running: http://localhost:${PORT}`);
   console.log(`Login page: http://localhost:${PORT}/`);
 });
+
 
 
 
