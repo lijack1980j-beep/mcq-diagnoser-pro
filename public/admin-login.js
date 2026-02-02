@@ -1,64 +1,45 @@
 const statusEl = document.getElementById("status");
-const whoEl = document.getElementById("who");
 
 function setStatus(msg) {
   statusEl.textContent = msg || "";
 }
 
-async function loginAdmin() {
-  const username = document.getElementById("user").value.trim();
+async function enter() {
   const password = document.getElementById("pass").value;
 
-  if (!username || !password) {
-    setStatus("Enter username + password.");
+  if (!password) {
+    setStatus("Enter the password.");
     return;
   }
 
-  setStatus("Logging in…");
+  setStatus("Checking…");
 
   try {
-    // ✅ correct backend endpoint (session login)
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ password })
     });
 
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      setStatus(data.error || "Login failed.");
+      setStatus(data.error || "Access denied.");
       return;
     }
 
-    // ✅ now check who am I (session)
-    const meRes = await fetch("/api/auth/me");
-    const meData = await meRes.json().catch(() => ({}));
-
-    const user = meData.user;
-    if (!user) {
-      setStatus("Session error. Try again.");
-      return;
-    }
-
-    whoEl.textContent = `${user.username} (${user.role})`;
-
-    if (user.role !== "admin") {
-      setStatus("Not admin. Redirecting…");
-      setTimeout(() => (window.location.href = "/questions.html"), 600);
-      return;
-    }
-
-    setStatus("Admin verified ✅ Redirecting…");
-    setTimeout(() => (window.location.href = "/admin.html"), 500);
+    setStatus("✅ Access granted. Redirecting…");
+    setTimeout(() => (window.location.href = "/admin.html"), 300);
 
   } catch (e) {
     setStatus("Network error: " + e.message);
   }
 }
 
-document.getElementById("loginBtn").onclick = loginAdmin;
+document.getElementById("goBtn").onclick = enter;
 document.getElementById("homeBtn").onclick = () => (window.location.href = "/");
 
-// small label
-whoEl.textContent = "Not logged in";
+// Enter key support
+document.getElementById("pass").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") enter();
+});
