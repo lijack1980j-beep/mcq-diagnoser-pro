@@ -1,3 +1,5 @@
+// public/admin.js  ✅ JWT VERSION (no cookies)
+
 const whoEl = document.getElementById("who");
 const statusEl = document.getElementById("status");
 const listEl = document.getElementById("list");
@@ -16,35 +18,34 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
-/* ✅ SESSION-BASED API CALL */
+/* ✅ JWT API CALL (sends Authorization header) */
 async function api(path, options = {}) {
-  const res = await fetch(path, {
-    ...options,
-    credentials: "include", // ⭐ send session cookie
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    }
-  });
+  const token = localStorage.getItem("token");
+
+  const headers = {
+    ...(options.headers || {}),
+    ...(options.body ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+
+  const res = await fetch(path, { ...options, headers });
 
   const text = await res.text();
   let data = {};
-  try { data = JSON.parse(text); } catch {}
+  try { data = text ? JSON.parse(text) : {}; } catch { data = {}; }
 
-  if (!res.ok) {
-    throw new Error(data.error || "Request failed");
-  }
-
+  if (!res.ok) throw new Error(data.error || "Request failed");
   return data;
 }
 
-/* ✅ CHECK WHO IS LOGGED IN */
+/* ✅ CHECK WHO IS LOGGED IN (must be admin) */
 async function loadMe() {
   try {
     const data = await api("/api/auth/me");
+
     if (!data.user) {
       alert("Please login first.");
-      window.location.href = "/";
+      window.location.href = "/admin-login.html"; // or "/" if you want
       return;
     }
 
@@ -55,14 +56,16 @@ async function loadMe() {
     }
 
     whoEl.textContent = `Admin: ${data.user.username}`;
-  } catch {
-    window.location.href = "/";
+  } catch (e) {
+    // token invalid/expired or endpoint missing
+    localStorage.removeItem("token");
+    window.location.href = "/admin-login.html";
   }
 }
 
-/* ✅ LOGOUT */
-async function logout() {
-  await api("/api/auth/logout", { method: "POST" });
+/* ✅ LOGOUT (JWT logout = delete token) */
+function logout() {
+  localStorage.removeItem("token");
   window.location.href = "/";
 }
 
@@ -89,11 +92,11 @@ function renderList(items) {
   let filtered = items;
 
   if (topicFilter) {
-    filtered = filtered.filter(q => String(q.topic || "") === topicFilter);
+    filtered = filtered.filter((q) => String(q.topic || "") === topicFilter);
   }
 
   if (search) {
-    filtered = filtered.filter(q =>
+    filtered = filtered.filter((q) =>
       String(q.question || "").toLowerCase().includes(search) ||
       String(q.topic || "").toLowerCase().includes(search)
     );
@@ -106,7 +109,9 @@ function renderList(items) {
     return;
   }
 
-  listEl.innerHTML = filtered.map((q) => `
+  listEl.innerHTML = filtered
+    .map(
+      (q) => `
     <div class="item">
       <div class="row">
         <div class="badge">${escapeHtml(q.topic || "-")}</div>
@@ -117,7 +122,9 @@ function renderList(items) {
       <div class="qtext">${escapeHtml(q.question || "")}</div>
       <div class="small">ID: ${q.id}</div>
     </div>
-  `).join("");
+  `
+    )
+    .join("");
 
   listEl.querySelectorAll("[data-del]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -213,6 +220,6 @@ document.getElementById("topicFilter").addEventListener("input", loadQuestions);
 /* ---------------- INIT ---------------- */
 
 (async function init() {
-  await loadMe();       // verify admin session
+  await loadMe();       // verify admin via JWT
   await loadQuestions();
 })();
