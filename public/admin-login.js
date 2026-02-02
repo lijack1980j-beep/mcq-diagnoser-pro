@@ -1,3 +1,5 @@
+// public/admin-login.js  ✅ JWT VERSION (works with your /api/auth/login returning { token, user })
+
 const statusEl = document.getElementById("status");
 
 function setStatus(msg) {
@@ -17,18 +19,27 @@ async function enter() {
   try {
     const res = await fetch("/api/auth/login", {
       method: "POST",
-      credentials: "include", // ⭐ REQUIRED
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "admin",
-        password: password
+        password
       })
     });
 
-    const data = await res.json().catch(() => ({}));
+    const text = await res.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch { data = {}; }
 
     if (!res.ok) {
       setStatus(data.error || "Access denied.");
+      return;
+    }
+
+    // ✅ store JWT token
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+    } else {
+      setStatus("Login succeeded but token missing.");
       return;
     }
 
