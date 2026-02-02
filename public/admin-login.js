@@ -5,12 +5,6 @@ function setStatus(msg) {
   statusEl.textContent = msg || "";
 }
 
-function saveSession(data) {
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("role", data.role || "user");
-  localStorage.setItem("username", data.username || "");
-}
-
 async function loginAdmin() {
   const username = document.getElementById("user").value.trim();
   const password = document.getElementById("pass").value;
@@ -23,7 +17,8 @@ async function loginAdmin() {
   setStatus("Logging in…");
 
   try {
-    const res = await fetch("/api/auth-login", {
+    // ✅ correct backend endpoint (session login)
+    const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password })
@@ -36,11 +31,19 @@ async function loginAdmin() {
       return;
     }
 
-    saveSession(data);
+    // ✅ now check who am I (session)
+    const meRes = await fetch("/api/auth/me");
+    const meData = await meRes.json().catch(() => ({}));
 
-    const role = (data.role || localStorage.getItem("role") || "").toLowerCase();
+    const user = meData.user;
+    if (!user) {
+      setStatus("Session error. Try again.");
+      return;
+    }
 
-    if (role !== "admin") {
+    whoEl.textContent = `${user.username} (${user.role})`;
+
+    if (user.role !== "admin") {
       setStatus("Not admin. Redirecting…");
       setTimeout(() => (window.location.href = "/questions.html"), 600);
       return;
@@ -57,11 +60,5 @@ async function loginAdmin() {
 document.getElementById("loginBtn").onclick = loginAdmin;
 document.getElementById("homeBtn").onclick = () => (window.location.href = "/");
 
-// show quick status
-(function init() {
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role") || "";
-  const username = localStorage.getItem("username") || "";
-
-  if (token && username) whoEl.textContent = `${username} (${role || "user"})`;
-})();
+// small label
+whoEl.textContent = "Not logged in";
