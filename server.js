@@ -416,9 +416,12 @@ async function ensureAdminUser() {
 
 /** ---------- Start ---------- **/
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  console.log("Server running");
+  await ensureAdminUser();
   console.log(`✅ Running: http://localhost:${PORT}`);
   console.log(`Login page: http://localhost:${PORT}/`);
 });
+
 
 
