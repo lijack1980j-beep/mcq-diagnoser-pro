@@ -5,7 +5,7 @@ function setStatus(msg) {
 }
 
 async function enter() {
-  const password = document.getElementById("pass").value;
+  const password = document.getElementById("pass").value.trim();
 
   if (!password) {
     setStatus("Enter the password.");
@@ -15,10 +15,14 @@ async function enter() {
   setStatus("Checking…");
 
   try {
-    const res = await fetch("/api/admin/login", {
+    const res = await fetch("/api/auth/login", {
       method: "POST",
+      credentials: "include", // ⭐ REQUIRED
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password })
+      body: JSON.stringify({
+        username: "admin",
+        password: password
+      })
     });
 
     const data = await res.json().catch(() => ({}));
@@ -29,17 +33,18 @@ async function enter() {
     }
 
     setStatus("✅ Access granted. Redirecting…");
-    setTimeout(() => (window.location.href = "/admin.html"), 300);
+    setTimeout(() => {
+      window.location.href = "/admin.html";
+    }, 300);
 
   } catch (e) {
-    setStatus("Network error: " + e.message);
+    setStatus("Network error.");
   }
 }
 
 document.getElementById("goBtn").onclick = enter;
 document.getElementById("homeBtn").onclick = () => (window.location.href = "/");
 
-// Enter key support
 document.getElementById("pass").addEventListener("keydown", (e) => {
   if (e.key === "Enter") enter();
 });
