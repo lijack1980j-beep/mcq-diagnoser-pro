@@ -392,7 +392,7 @@ app.get("/api/history", requireAuth, async (req, res) => {
 
 // ===== ADMIN AUTO-CREATION =====
 const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin"; // min 6 chars
+const ADMIN_PASSWORD = "admin&é""; // min 6 chars
 
 async function ensureAdminUser() {
   const { data } = await supabase
@@ -422,6 +422,7 @@ app.listen(PORT, async () => {
   console.log(`✅ Running: http://localhost:${PORT}`);
   console.log(`Login page: http://localhost:${PORT}/`);
 });
+
 
 
 
